@@ -1,13 +1,27 @@
 import 'package:flutter/material.dart';
+//
+// SizedBox buildSizedBoxH(double height) {
+//   return SizedBox(
+//     height: height,
+//   );
+// }
+//
+// SizedBox buildSizedBoxW(double width) {
+//   return SizedBox(
+//     width: width,
+//   );
+// }
 
-SizedBox buildSizedBoxH(double height) {
-  return SizedBox(
-    height: height,
-  );
-}
+extension SizedBoxExtention on double {
+  SizedBox addHSpace() {
+    return SizedBox(
+      height: this,
+    );
+  }
 
-SizedBox buildSizedBoxW(double width) {
-  return SizedBox(
-    width: width,
-  );
+  SizedBox addWSpace() {
+    return SizedBox(
+      width: this,
+    );
+  }
 }
