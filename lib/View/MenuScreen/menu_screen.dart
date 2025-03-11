@@ -6,6 +6,7 @@ import 'package:urestaurants_user/Constant/app_assets.dart';
 import 'package:urestaurants_user/Constant/app_color.dart';
 import 'package:urestaurants_user/Utils/app_loader.dart';
 import 'package:urestaurants_user/Utils/app_sizebox.dart';
+import 'package:urestaurants_user/Utils/cache_manager.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
 import 'package:urestaurants_user/View/MenuScreen/controller/menu_screen_controller.dart';
 
@@ -61,6 +62,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     url: controller.sectionDataModel?[index].imageUrl ?? "",
                                     name: controller.sectionDataModel?[index].name ?? "",
                                     height: 78,
+                                    cacheManager: CustomCacheManager(),
                                     width: 158),
                                 10.0.addHSpace(),
                                 Padding(
@@ -96,18 +98,17 @@ class _MenuScreenState extends State<MenuScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              if (controller.sectionDataModel?[controller.selectedIndex2].name != "Dolci")
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 10, bottom: 5, left: 10),
-                                  child: Builder(builder: (context) {
-                                    return controller.mainData[index]["title"]
-                                        .toString()
-                                        .toUpperCase()
-                                        .trim()
-                                        .replaceAll('     ', '')
-                                        .primaryMedium(fontColor: AppColor.appLightGreyColor, fontSize: 15);
-                                  }),
-                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10, bottom: 5, left: 10),
+                                child: Builder(builder: (context) {
+                                  return controller.mainData[index]["title"]
+                                      .toString()
+                                      .toUpperCase()
+                                      .trim()
+                                      .replaceAll('     ', '')
+                                      .primaryMedium(fontColor: AppColor.appLightGreyColor, fontSize: 15);
+                                }),
+                              ),
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(15),
                                 child: ListView.builder(
@@ -121,141 +122,75 @@ class _MenuScreenState extends State<MenuScreen> {
                                         .trim()
                                         .toLowerCase()
                                         .contains(controller.textController.text.toString().trim().toLowerCase())) {
-                                      return controller.sectionDataModel?[controller.selectedIndex2].name == "Dolci"
-                                          ? Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Container(
-                                                  height: 170,
-                                                  width: double.infinity,
-                                                  decoration: BoxDecoration(
-                                                      borderRadius: BorderRadius.circular(15),
-                                                      image: DecorationImage(image: AssetImage(data.imageAVAL ?? ""), fit: BoxFit.cover)),
-                                                ),
-                                                7.0.addHSpace(),
-                                                Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                      return GestureDetector(
+                                        onTap: () {
+                                          HapticFeedBack.buttonClick();
+                                          List<int> indexList = [index, itemIndex];
+                                          if (indexList.join(",") == controller.selectedIndex.join(",")) {
+                                            controller.updateSelectedIndex([], "");
+                                          } else {
+                                            controller.updateSelectedIndex(indexList, data.allergeni?.replaceAll(".", "") ?? "");
+                                          }
+                                        },
+                                        child: Column(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.symmetric(vertical: 13),
+                                              color: controller.selectedIndex.isEmpty
+                                                  ? AppColor.appWhiteColor
+                                                  : controller.selectedIndex[0] == index && controller.selectedIndex[1] == itemIndex
+                                                      ? AppColor.appGreyColor4
+                                                      : AppColor.appWhiteColor,
+                                              child: Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 13),
+                                                child: Column(
                                                   children: [
-                                                    "${data.the000Nome}".primarySemiBold(fontColor: AppColor.appBlackColor, fontSize: 22),
-                                                    "€ ${data.priceD}".primaryRegular(fontColor: AppColor.appGreyColor5, fontSize: 12),
-                                                  ],
-                                                ).paddingOnly(left: 15)
-                                              ],
-                                            ).paddingSymmetric(vertical: 13)
-                                          : GestureDetector(
-                                              onTap: () {
-                                                HapticFeedBack.buttonClick();
-                                                List<int> indexList = [index, itemIndex];
-                                                if (indexList.join(",") == controller.selectedIndex.join(",")) {
-                                                  controller.updateSelectedIndex([], "");
-                                                } else {
-                                                  controller.updateSelectedIndex(indexList, data.allergeni?.replaceAll(".", "") ?? "");
-                                                }
-                                              },
-                                              child: Column(
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets.symmetric(vertical: 13),
-                                                    color: controller.selectedIndex.isEmpty
-                                                        ? AppColor.appWhiteColor
-                                                        : controller.selectedIndex[0] == index && controller.selectedIndex[1] == itemIndex
-                                                            ? AppColor.appGreyColor4
-                                                            : AppColor.appWhiteColor,
-                                                    child: Padding(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 13),
-                                                      child: Column(
-                                                        children: [
-                                                          Row(
-                                                            children: [
-                                                              Expanded(
-                                                                flex: 12,
-                                                                child: Builder(builder: (context) {
-                                                                  return Column(
-                                                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                                                    mainAxisAlignment: MainAxisAlignment.center,
-                                                                    children: [
-                                                                      (controller.selectedIndex.isEmpty
-                                                                              ? controller.getTitle(index, itemIndex)
-                                                                              : controller.selectedIndex[0] == index &&
-                                                                                      controller.selectedIndex[1] == itemIndex
-                                                                                  ? controller.getTitle(index, itemIndex, local: "it")
-                                                                                  : controller.getTitle(index, itemIndex))
-                                                                          .primaryRegular(fontSize: 17, fontColor: AppColor.appBlackColor),
-                                                                      if (data.ingredienti?.isNotEmpty ?? false)
-                                                                        (controller.selectedIndex.isEmpty
-                                                                                ? controller.getSubTitle(index, itemIndex)
-                                                                                : controller.selectedIndex[0] == index &&
-                                                                                        controller.selectedIndex[1] == itemIndex
-                                                                                    ? controller.getSubTitle(index, itemIndex, local: "it")
-                                                                                    : controller.getSubTitle(index, itemIndex))
-                                                                            .primaryRegular(
-                                                                                fontColor: AppColor.appGrey3Color,
-                                                                                fontSize: 17,
-                                                                                textOverflow: TextOverflow.clip),
-                                                                      data.imageAVAL != null
-                                                                          ? controller.selectedIndex.isEmpty
-                                                                              // ? price(controller, data)
-                                                                              ? Column(
-                                                                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                                                                  children: [
-                                                                                    if (data.priceD?.isNotEmpty ?? false)
-                                                                                      "€ ${data.priceD}".primaryRegular(
-                                                                                          fontSize: 17, fontColor: AppColor.appBlackColor),
-                                                                                    if (data.priceM?.isNotEmpty ?? false)
-                                                                                      "€ ${data.priceM}".primaryRegular(
-                                                                                          fontSize: 17, fontColor: AppColor.appBlackColor),
-                                                                                  ],
-                                                                                )
-                                                                              : controller.selectedIndex[0] == index &&
-                                                                                      controller.selectedIndex[1] == itemIndex
-                                                                                  ? const SizedBox()
-                                                                                  // : price(controller, data)
-                                                                                  : Column(
-                                                                                      crossAxisAlignment: CrossAxisAlignment.end,
-                                                                                      children: [
-                                                                                        if (data.priceD?.isNotEmpty ?? false)
-                                                                                          "€ ${data.priceD}".primaryRegular(
-                                                                                              fontSize: 17,
-                                                                                              fontColor: AppColor.appBlackColor),
-                                                                                        if (data.priceM?.isNotEmpty ?? false)
-                                                                                          "€ ${data.priceM}".primaryRegular(
-                                                                                              fontSize: 17,
-                                                                                              fontColor: AppColor.appBlackColor),
-                                                                                      ],
-                                                                                    )
-                                                                          : const SizedBox(),
-                                                                    ],
-                                                                  );
-                                                                }),
-                                                              ),
-                                                              data.imageAVAL == null
-                                                                  ? Expanded(
-                                                                      flex: 4,
-                                                                      child: Column(
-                                                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                                                        children: [
-                                                                          if (data.priceD?.isNotEmpty ?? false)
-                                                                            "€ ${data.priceD}".primaryRegular(
-                                                                                fontSize: 17, fontColor: AppColor.appBlackColor),
-                                                                          if (data.priceM?.isNotEmpty ?? false)
-                                                                            "€ ${data.priceM}".primaryRegular(
-                                                                                fontSize: 17, fontColor: AppColor.appBlackColor),
-                                                                        ],
-                                                                      ),
-                                                                      // child: price(controller, data),
-                                                                    )
-                                                                  : controller.selectedIndex.isEmpty
-                                                                      ? assetImageWithPlaceHolder(
-                                                                          url: data.imageAVAL ?? "",
-                                                                          height: 08.h,
-                                                                          width: 12.h,
-                                                                          name: 'asd',
-                                                                        )
-                                                                      : (controller.selectedIndex[0] == index &&
-                                                                              controller.selectedIndex[1] == itemIndex)
-                                                                          ? Expanded(
-                                                                              flex: 4,
-                                                                              child: Column(
+                                                    Row(
+                                                      children: [
+                                                        Expanded(
+                                                          flex: 12,
+                                                          child: Builder(builder: (context) {
+                                                            return Column(
+                                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                                              mainAxisAlignment: MainAxisAlignment.center,
+                                                              children: [
+                                                                (controller.selectedIndex.isEmpty
+                                                                        ? controller.getTitle(index, itemIndex)
+                                                                        : controller.selectedIndex[0] == index &&
+                                                                                controller.selectedIndex[1] == itemIndex
+                                                                            ? controller.getTitle(index, itemIndex, local: "it")
+                                                                            : controller.getTitle(index, itemIndex))
+                                                                    .primaryRegular(fontSize: 17, fontColor: AppColor.appBlackColor),
+                                                                if (data.ingredienti?.isNotEmpty ?? false)
+                                                                  (controller.selectedIndex.isEmpty
+                                                                          ? controller.getSubTitle(index, itemIndex)
+                                                                          : controller.selectedIndex[0] == index &&
+                                                                                  controller.selectedIndex[1] == itemIndex
+                                                                              ? controller.getSubTitle(index, itemIndex, local: "it")
+                                                                              : controller.getSubTitle(index, itemIndex))
+                                                                      .primaryRegular(
+                                                                          fontColor: AppColor.appGrey3Color,
+                                                                          fontSize: 17,
+                                                                          textOverflow: TextOverflow.clip),
+                                                                data.imageAVAL != null
+                                                                    ? controller.selectedIndex.isEmpty
+                                                                        // ? price(controller, data)
+                                                                        ? Column(
+                                                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                                                            children: [
+                                                                              if (data.priceD?.isNotEmpty ?? false)
+                                                                                "€ ${data.priceD}".primaryRegular(
+                                                                                    fontSize: 17, fontColor: AppColor.appBlackColor),
+                                                                              if (data.priceM?.isNotEmpty ?? false)
+                                                                                "€ ${data.priceM}".primaryRegular(
+                                                                                    fontSize: 17, fontColor: AppColor.appBlackColor),
+                                                                            ],
+                                                                          )
+                                                                        : controller.selectedIndex[0] == index &&
+                                                                                controller.selectedIndex[1] == itemIndex
+                                                                            ? const SizedBox()
+                                                                            // : price(controller, data)
+                                                                            : Column(
                                                                                 crossAxisAlignment: CrossAxisAlignment.end,
                                                                                 children: [
                                                                                   if (data.priceD?.isNotEmpty ?? false)
@@ -265,72 +200,63 @@ class _MenuScreenState extends State<MenuScreen> {
                                                                                     "€ ${data.priceM}".primaryRegular(
                                                                                         fontSize: 17, fontColor: AppColor.appBlackColor),
                                                                                 ],
-                                                                              ),
-                                                                              // child: price(controller, data),
-                                                                            )
-                                                                          : (data.imageAVAL != null)
-                                                                              ? Builder(builder: (context) {
-                                                                                  debugPrint(
-                                                                                      'data.imageAVAL::::::::::::::::${data.imageAVAL}');
-                                                                                  return assetImageWithPlaceHolder(
-                                                                                      url: data.imageAVAL ?? "",
-                                                                                      height: 08.h,
-                                                                                      width: 12.h,
-                                                                                      name: 'sadsadsad');
-                                                                                })
-                                                                              : Expanded(
-                                                                                  flex: 4,
-                                                                                  child: Column(
-                                                                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                                                                    children: [
-                                                                                      if (data.priceD?.isNotEmpty ?? false)
-                                                                                        "€ ${data.priceD}".primaryRegular(
-                                                                                            fontSize: 17,
-                                                                                            fontColor: AppColor.appBlackColor),
-                                                                                      if (data.priceM?.isNotEmpty ?? false)
-                                                                                        "€ ${data.priceM}".primaryRegular(
-                                                                                            fontSize: 17,
-                                                                                            fontColor: AppColor.appBlackColor),
-                                                                                    ],
-                                                                                  ),
-                                                                                  // child: price(controller, data),
-                                                                                ),
+                                                                              )
+                                                                    : const SizedBox(),
+                                                              ],
+                                                            );
+                                                          }),
+                                                        ),
+                                                        Expanded(
+                                                          flex: 4,
+                                                          child: Column(
+                                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                                            children: [
+                                                              if (data.priceD?.isNotEmpty ?? false)
+                                                                "€ ${data.priceD}"
+                                                                    .primaryRegular(fontSize: 17, fontColor: AppColor.appBlackColor),
+                                                              if (data.priceM?.isNotEmpty ?? false)
+                                                                "€ ${data.priceM}"
+                                                                    .primaryRegular(fontSize: 17, fontColor: AppColor.appBlackColor),
                                                             ],
                                                           ),
-                                                          if (controller.selectedIndex.isNotEmpty && controller.allergyImageList.isNotEmpty)
-                                                            Visibility(
-                                                              visible: controller.selectedIndex[0] == index &&
-                                                                  controller.selectedIndex[1] == itemIndex,
-                                                              child: Padding(
-                                                                padding: const EdgeInsets.only(top: 8.0),
-                                                                child: Row(
-                                                                  children: List.generate(
-                                                                    controller.allergyImageList.length,
-                                                                    (imageIndex) => Center(
-                                                                      child: Image.asset(
-                                                                        "assets/images/allergies/${controller.allergyImageList[imageIndex]}",
-                                                                        height: 30,
-                                                                        width: 30,
-                                                                      ),
-                                                                    ).paddingOnly(right: 10),
-                                                                  ),
+                                                          // child: price(controller, data),
+                                                        )
+                                                      ],
+                                                    ),
+                                                    if (controller.selectedIndex.isNotEmpty && controller.allergyImageList.isNotEmpty)
+                                                      Visibility(
+                                                        visible: controller.selectedIndex[0] == index &&
+                                                            controller.selectedIndex[1] == itemIndex,
+                                                        child: Padding(
+                                                          padding: const EdgeInsets.only(top: 8.0),
+                                                          child: Row(
+                                                            children: List.generate(
+                                                              controller.allergyImageList.length,
+                                                              (imageIndex) => Center(
+                                                                child: Image.asset(
+                                                                  "assets/images/allergies/${controller.allergyImageList[imageIndex]}",
+                                                                  height: 30,
+                                                                  width: 30,
                                                                 ),
-                                                              ),
-                                                            )
-                                                        ],
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  if (itemIndex != controller.mainData[index]["data"].length - 1)
-                                                    Container(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 13),
-                                                      color: AppColor.appDividerColor,
-                                                      height: 1,
-                                                      width: double.infinity,
-                                                    ),
-                                                ],
+                                                              ).paddingOnly(right: 10),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                  ],
+                                                ),
                                               ),
-                                            );
+                                            ),
+                                            if (itemIndex != controller.mainData[index]["data"].length - 1)
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 13),
+                                                color: AppColor.appDividerColor,
+                                                height: 1,
+                                                width: double.infinity,
+                                              ),
+                                          ],
+                                        ),
+                                      );
                                     } else {
                                       return const SizedBox();
                                     }

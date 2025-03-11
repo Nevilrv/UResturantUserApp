@@ -18,7 +18,7 @@ class MenuConfig {
 
   Future<Object?> sectionData() async {
     try {
-      String id = preferences.getString(SharedPreference.id) ?? "01";
+      String id = /*/* preferences.getString(SharedPreference.id) ?? */*/ "01";
       DatabaseReference configRef = _databaseRef.child('$id/Config/Sections');
       final snapshot = await configRef.get();
       if (snapshot.exists) {
@@ -40,7 +40,7 @@ class MenuConfig {
 
   Future<DataSnapshot?> itemData() async {
     try {
-      String id = preferences.getString(SharedPreference.id) ?? "01";
+      String id = /* preferences.getString(SharedPreference.id) ?? */ "01";
       DatabaseReference configRef = _databaseRef.child('$id/Items');
       final snapshot = await configRef.get();
       if (snapshot.exists) {
@@ -98,7 +98,7 @@ class MenuConfig {
   // }
 
   Future addItemData(Map<String, dynamic> body) async {
-    String id = preferences.getString(SharedPreference.id) ?? "01";
+    String id = /* preferences.getString(SharedPreference.id) ?? */ "01";
     String key = body['key'].toString();
     await _databaseRef.child('$id/Items').child(key).set(body);
   }
@@ -110,12 +110,12 @@ class MenuConfig {
   }
 
   Future deleteItem(String id2) async {
-    String id = preferences.getString(SharedPreference.id) ?? "01";
+    String id = /* preferences.getString(SharedPreference.id) ?? */ "01";
     await _databaseRef.child('$id/Items').child(id2).remove();
   }
 
   Future editItemData(Map<String, dynamic> body, String key) async {
-    String id = preferences.getString(SharedPreference.id) ?? "01";
+    String id = /* preferences.getString(SharedPreference.id) ?? */ "01";
     await _databaseRef.child('$id/Items').child(key).set(body);
   }
 }

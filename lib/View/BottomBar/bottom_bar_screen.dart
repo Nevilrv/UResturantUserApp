@@ -2,15 +2,17 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:urestaurants_user/Constant/app_assets.dart';
+import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/Utils/app_loader.dart';
 import 'package:urestaurants_user/Utils/app_sizebox.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
 import 'package:urestaurants_user/View/BottomBar/controller/bottom_bar_controller.dart';
+import 'package:urestaurants_user/View/BottomBar/no_internet_screen.dart';
+import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/HomeScreen/home_screen.dart';
 import 'package:urestaurants_user/View/InfoScreen/info_screen.dart';
 import 'package:urestaurants_user/View/MenuScreen/menu_screen.dart';
-import 'package:urestaurants_user/View/OrderScreen/order_screen.dart';
+import 'package:urestaurants_user/View/Reservation/reservation_screen.dart';
 
 import '../../Constant/app_color.dart';
 import '../../Constant/app_string.dart';
@@ -35,23 +37,22 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
   @override
   void initState() {
     super.initState();
-    bottomBarController.onInitMethod(widget.isReservation);
   }
 
   @override
   Widget build(BuildContext context) {
     // Build screens array
-    final List<Widget> screenName = [
-      const HomeScreen(),
-      const MenuScreen(),
-      const OrderScreen(),
-      // const ReservationScreen(),
-      // const ParkingScreen(),
-      const InfoScreen(),
-    ];
 
     return GetBuilder<BottomBarController>(
       builder: (controller) {
+        final List<Widget> screenName = [
+          const HomeScreen(),
+          const MenuScreen(),
+          // const OrderScreen(),
+          if (controller.isReservationAvailable) const ReservationScreen(),
+          // const ParkingScreen(),
+          const InfoScreen(),
+        ];
         return Scaffold(
           backgroundColor: CupertinoColors.systemGrey6,
 
@@ -67,6 +68,10 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
                 )
               : AppBar(
                   forceMaterialTransparency: true,
+                  systemOverlayStyle: const SystemUiOverlayStyle(
+                    statusBarColor: CupertinoColors.systemGrey6,
+                    statusBarIconBrightness: Brightness.dark,
+                  ),
                   leading: Row(
                     children: [
                       10.0.addWSpace(),
@@ -79,14 +84,6 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
                     ],
                   ),
                   leadingWidth: 100,
-                  actions: [
-                    Icon(
-                      CupertinoIcons.map,
-                      color: AppColor.appColor,
-                      size: 25,
-                    ),
-                    10.0.addWSpace(),
-                  ],
                 ),
 
           body: AnnotatedRegion<SystemUiOverlayStyle>(
@@ -94,7 +91,11 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
               statusBarColor: CupertinoColors.systemGrey6,
               statusBarIconBrightness: Brightness.dark,
             ),
-            child: screenName[controller.selectScreen],
+            child: (controller.isConnected == false && ((preferences.getString(SharedPreference.allData, defValue: '') ?? '').isEmpty))
+                ? NoInternetScreen()
+                : (controller.isConnected == false && controller.selectScreen == 2 && controller.isReservationAvailable)
+                    ? NoInternetScreen()
+                    : screenName[controller.selectScreen],
           ),
           // BottomNavBar
           bottomNavigationBar: widget.pageFound
@@ -103,59 +104,44 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
                     splashFactory: NoSplash.splashFactory,
                     highlightColor: Colors.transparent,
                   ),
-                  child: BottomNavigationBar(
-                    backgroundColor: CupertinoColors.systemGrey6.withOpacity(0.1),
-                    selectedItemColor: AppColor.appColor,
-                    unselectedItemColor: Colors.grey,
-                    currentIndex: controller.selectScreen,
-                    type: BottomNavigationBarType.fixed,
-                    elevation: 0,
-                    selectedFontSize: 10,
-                    unselectedFontSize: 10,
-                    items: [
-                      const BottomNavigationBarItem(
-                        icon: Icon(CupertinoIcons.home),
-                        label: AppString.home,
-                      ),
-                      const BottomNavigationBarItem(
-                        icon: Icon(CupertinoIcons.book),
-                        label: AppString.menu,
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Image.asset(
-                          AppAssets.foodDelivery,
-                          color: controller.selectScreen == 1 ? AppColor.appColor : Colors.grey,
-                          width: 25,
-                          height: 25,
+                  child: GetBuilder<HomeScreenController>(builder: (homeController) {
+                    return BottomNavigationBar(
+                      backgroundColor: CupertinoColors.systemGrey6.withOpacity(0.1),
+                      selectedItemColor: AppColor.appColor,
+                      unselectedItemColor: Colors.grey,
+                      currentIndex: controller.selectScreen,
+                      type: BottomNavigationBarType.fixed,
+                      elevation: 0,
+                      selectedFontSize: 10,
+                      unselectedFontSize: 10,
+                      items: [
+                        BottomNavigationBarItem(
+                          icon: Icon(CupertinoIcons.home),
+                          label: homeController.selectedRestaurant?.info?.nome ?? AppString.home,
                         ),
-                        label: AppString.order,
-                      ),
-                      // const BottomNavigationBarItem(
-                      //   icon: Icon(
-                      //     Icons.description_outlined,
-                      //   ),
-                      //   label: "Table",
-                      // ),
-                      // BottomNavigationBarItem(
-                      //   icon: Image.asset(
-                      //     AppAssets.car,
-                      //     color: controller.selectScreen == 3 ? AppColor.appColor : Colors.grey,
-                      //     width: 25,
-                      //     height: 25,
-                      //   ),
-                      //   label: AppString.parking,
-                      // ),
-                      const BottomNavigationBarItem(
-                        icon: Icon(CupertinoIcons.info),
-                        label: AppString.info,
-                      ),
-                    ],
-                    onTap: (value) {
-                      HapticFeedBack.buttonClick();
-                      controller.selectScreen = value;
-                      setState(() {});
-                    },
-                  ),
+                        const BottomNavigationBarItem(
+                          icon: Icon(CupertinoIcons.book),
+                          label: AppString.menu,
+                        ),
+                        if (controller.isReservationAvailable)
+                          const BottomNavigationBarItem(
+                            icon: Icon(
+                              Icons.description_outlined,
+                            ),
+                            label: "Table",
+                          ),
+                        const BottomNavigationBarItem(
+                          icon: Icon(CupertinoIcons.info),
+                          label: AppString.info,
+                        ),
+                      ],
+                      onTap: (value) {
+                        HapticFeedBack.buttonClick();
+                        controller.selectScreen = value;
+                        setState(() {});
+                      },
+                    );
+                  }),
                 )
               : null,
         );

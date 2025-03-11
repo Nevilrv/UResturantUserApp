@@ -10,7 +10,7 @@ class OrderConfig {
   Future<bool> storeOrderData(String? userId, Map<String, dynamic> body) async {
     try {
       int totalOrders = 0;
-      log('userId::::::::::::::::${userId}');
+
       DatabaseReference configRef = _databaseRef.child(userId ?? "");
       //'HWtvHGVmXded5Hqh04dFYrFxflr2'
       final snapshot = await configRef.get();
@@ -20,15 +20,13 @@ class OrderConfig {
         if (data.containsKey("0rders")) {
           totalOrders = data['0rders'];
         }
-        log('totalOrders::::::::::::::::${totalOrders}');
-        log('data::::::::::::::::${data}');
+
         List<int> numericKeys = data.keys
             .where((key) => int.tryParse(key) != null) // Keep only numeric keys
             .map((key) => int.parse(key)) // Convert to int
             .toList();
-        log('numericKeys::::::::::::::::${numericKeys}');
+
         int lastIndex = numericKeys.isNotEmpty ? numericKeys.reduce((a, b) => a > b ? a : b) : 0;
-        log('lastIndex::::::::::::::::${lastIndex}');
 
         await _databaseRef.child(userId ?? "").update({"0rders": totalOrders + 1, "${lastIndex + 1}": body});
         return true;

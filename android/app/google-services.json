@@ -163,6 +163,50 @@
       },
       "oauth_client": [
         {
+          "client_id": "820988340688-f2a901n04lp0njtd7f40b26jjmb1ai4t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.urestaurants_user",
+            "certificate_hash": "4058dcb8b2fc962513e4515adef94cefd741355d"
+          }
+        },
+        {
+          "client_id": "820988340688-iskfrrhsg6b94gp293964psgf0id61lr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDnZ3aJqqe_SZVQe6F9r7jfK2Csw60vdxo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "820988340688-cn9hcqs2rp7ucttl5l9391vmdcidg6de.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "820988340688-500q5r2icvi4molpd90qdios2mjn2svc.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "celo.URestaurant-for-Business"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:820988340688:android:3f48c876a0b16d2bcfb1d5",
+        "android_client_info": {
+          "package_name": "com.user.urestaurants"
+        }
+      },
+      "oauth_client": [
+        {
           "client_id": "820988340688-iskfrrhsg6b94gp293964psgf0id61lr.apps.googleusercontent.com",
           "client_type": 3
         }

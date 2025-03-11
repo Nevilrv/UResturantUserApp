@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,11 +9,10 @@ import 'package:urestaurants_user/Constant/app_assets.dart';
 import 'package:urestaurants_user/Constant/app_color.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/Utils/app_loader.dart';
-import 'package:urestaurants_user/Utils/app_routes.dart';
 import 'package:urestaurants_user/Utils/app_sizebox.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
 import 'package:urestaurants_user/View/BottomBar/controller/bottom_bar_controller.dart';
-import 'package:urestaurants_user/View/InfoScreen/controller/info_controller.dart';
+import 'package:urestaurants_user/View/LoginScreen/login_screen.dart';
 import 'package:urestaurants_user/View/Reservation/reservation_controller.dart';
 
 import '../../Constant/app_string.dart';
@@ -24,9 +25,7 @@ class ReservationScreen extends StatefulWidget {
 }
 
 class _ReservationScreenState extends State<ReservationScreen> {
-  ReservationController controller = Get.put(ReservationController());
-  InfoController infoController = Get.put(InfoController());
-  BottomBarController bottomBarController = Get.put(BottomBarController());
+  ReservationController controller = Get.find();
 
   @override
   void initState() {
@@ -35,12 +34,18 @@ class _ReservationScreenState extends State<ReservationScreen> {
   }
 
   onInit() async {
-    await preferences.putString(SharedPreference.currentPage, "reservation");
     bool isLogin = preferences.getBool(SharedPreference.isLogin) ?? false;
     if (!isLogin) {
-      Get.offAllNamed(Routes.loginScreen);
+      Future.delayed(Duration(milliseconds: 500)).then(
+        (value) async {
+          bool? result = await Get.bottomSheet(LoginScreen());
+          log('result::::::::::::::::${result}');
+          if (result == null) {
+            Get.find<BottomBarController>().changeTab(0);
+          }
+        },
+      );
     }
-    await controller.fetchReservationData();
   }
 
   ScrollController scrollController = ScrollController();
@@ -523,7 +528,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
                         child: Center(
                           child: Text(
                             AppString.confirmed,
-                            style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: Colors.white, fontFamily: 'SfProDisplay', fontSize: 14, fontWeight: FontWeight.w700),
                           ),
                         ),
                       ),

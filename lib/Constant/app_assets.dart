@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:urestaurants_user/Constant/app_color.dart';
 
@@ -45,6 +46,7 @@ Widget cachedNetworkImage({
   Widget? errorWidget,
   double? width,
   double? height,
+  BaseCacheManager? cacheManager,
   required String name,
 }) {
   return ClipRRect(
@@ -52,6 +54,7 @@ Widget cachedNetworkImage({
     child: CachedNetworkImage(
         width: width,
         height: height,
+        cacheManager: cacheManager,
         errorWidget: (context, url, error) {
           return errorWidget ??
               Container(

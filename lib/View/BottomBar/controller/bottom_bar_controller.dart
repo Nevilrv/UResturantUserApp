@@ -4,29 +4,39 @@ import 'dart:developer';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
-import 'package:urestaurants_user/FirebaseConfig/info_screen_config.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/InfoScreen/controller/info_controller.dart';
 import 'package:urestaurants_user/View/MenuScreen/controller/menu_screen_controller.dart';
-import 'package:urestaurants_user/View/OrderScreen/controller/new_order_screen_controller.dart';
-import 'package:urestaurants_user/View/OrderScreen/controller/order_screen_controller.dart';
+import 'package:urestaurants_user/View/Reservation/reservation_controller.dart';
 
 class BottomBarController extends GetxController {
   int selectScreen = 0;
   bool isConnected = false; // Internet connectivity status
   final Connectivity _connectivity = Connectivity();
   late StreamSubscription<List<ConnectivityResult>> _subscription;
-
-  final InfoController infoController = Get.put(InfoController());
-  NewOrderScreenController newOrderScreenController = Get.put(NewOrderScreenController());
-  OrderPageController orderPageController = Get.put(OrderPageController());
-  MenuPageController menuController = Get.put(MenuPageController());
   HomeScreenController homeScreenController = Get.put(HomeScreenController());
+  final InfoController infoController = Get.put(InfoController());
+
+  MenuPageController menuPageController = Get.put(MenuPageController());
+  ReservationController reservationController = Get.put(ReservationController());
+
   bool forFirstTime = true;
+  bool isReservationAvailable = false;
   @override
   void onInit() {
     super.onInit();
+    fetchReservationData();
     _initializeConnectivity();
+  }
+
+  fetchReservationData() async {
+    await reservationController.fetchReservationData(
+      (p0) {
+        log('p0::::::::::::::::${p0}');
+        isReservationAvailable = p0;
+        update();
+      },
+    );
   }
 
   void _initializeConnectivity() async {
@@ -34,22 +44,21 @@ class BottomBarController extends GetxController {
     _subscription = _connectivity.onConnectivityChanged.listen((result) {
       _updateConnectionStatus(result);
     });
+    homeScreenController.getInitialData();
   }
 
   void _updateConnectionStatus(List<ConnectivityResult> result) {
+    bool olderResult = isConnected;
     if (result.isNotEmpty) {
-      bool olderResult = isConnected;
       isConnected = (result.first == ConnectivityResult.mobile || result.first == ConnectivityResult.wifi);
-      bool isFirstTime = preferences.getBool(SharedPreference.isFirstTime, defValue: true) ?? true;
-      if ((olderResult != isConnected) && forFirstTime != true) {
-        checkDatabaseVersionAndLoadData();
-      }
-      if (forFirstTime == true) {
-        forFirstTime = false;
-        checkDatabaseVersionAndLoadData();
+      if (isConnected == true && selectScreen == 2 && isReservationAvailable == true) {
+        fetchReservationData();
       }
     } else {
       isConnected = false;
+    }
+    if (olderResult == false && ((preferences.getString(SharedPreference.allData, defValue: '') ?? '').isEmpty)) {
+      homeScreenController.getInitialData();
     }
 
     log("Internet Connected: \$isConnected");
@@ -61,45 +70,24 @@ class BottomBarController extends GetxController {
     update();
   }
 
-  void onInitMethod(bool isReservation) {
-    String lastPage = preferences.getString(SharedPreference.currentPage) ?? "";
-
-    if (!isReservation) {
-      if (lastPage == "info") {
-        changeTab(1);
-      } else {
-        changeTab(0);
-      }
-    } else {
-      if (lastPage == "reservation") {
-        changeTab(1);
-      } else if (lastPage == "info") {
-        changeTab(2);
-      } else {
-        changeTab(0);
-      }
-    }
-  }
-
   Future<void> checkDatabaseVersionAndLoadData() async {
-    menuController.updateLoaderValue(true);
-    bool isSame = false;
-    bool isFirstTime = preferences.getBool(SharedPreference.isFirstTime, defValue: true) ?? true;
-    log('isConnected::::::::::::::::${isConnected}');
-    if (isConnected) {
-      isSame = await InfoConfig().checkDataVersion();
-      log('isSameaaa::::::::::::::::${isSame}');
-    } else {
-      isSame = isFirstTime == true ? false : true;
-      log('isSame::::::::::::::::${isSame}');
-      preferences.putBool(SharedPreference.isFirstTime, false);
-    }
-
-    log('isSame::::::::::::::::$isSame');
-    menuController.fetchData(isDBSame: isSame);
-    orderPageController.getData(true, isSame);
-    newOrderScreenController.getData(isSame: isSame);
-    infoController.initOrder(isDbSame: isSame);
+    // bool isSame = false;
+    // bool isFirstTime = preferences.getBool(SharedPreference.isFirstTime, defValue: true) ?? true;
+    // log('isConnected::::::::::::::::${isConnected}');
+    // if (isConnected) {
+    //   isSame = await InfoConfig().checkDataVersion();
+    //   log('isSameaaa::::::::::::::::${isSame}');
+    // } else {
+    //   isSame = isFirstTime == true ? false : true;
+    //   log('isSame::::::::::::::::${isSame}');
+    //   preferences.putBool(SharedPreference.isFirstTime, false);
+    // }
+    //
+    // log('isSame::::::::::::::::$isSame');
+    //
+    // orderPageController.getData(true, isSame);
+    // newOrderScreenController.getData(isSame: isSame);
+    // infoController.initOrder(isDbSame: isSame);
   }
 
   @override

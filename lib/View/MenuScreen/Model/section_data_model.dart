@@ -19,6 +19,7 @@ class SectionDataModel {
   String? nameZhHans;
   String? type;
   String? imageUrl;
+  List<String>? subCategory;
 
   SectionDataModel({
     this.imageName,
@@ -34,23 +35,35 @@ class SectionDataModel {
     this.nameZhHans,
     this.type,
     this.imageUrl,
+    this.subCategory,
   });
 
-  factory SectionDataModel.fromJson(Map<String, dynamic> json) => SectionDataModel(
-        imageName: json["ImageName"],
-        name: json["Name"],
-        nameRu: json["Name!RU"] ?? json["Name!ru"],
-        nameDe: json["Name!de"],
-        nameEn: json["Name!en"],
-        nameEs: json["Name!es"],
-        nameFr: json["Name!fr"],
-        namePl: json["Name!pl"],
-        sectionDataModelNameRu: json["Name!ru"],
-        nameZh: json["Name!zh"],
-        nameZhHans: json["Name!zh-Hans"],
-        type: json["Type"],
-        imageUrl: json["imageUrl"] ?? "",
-      );
+  factory SectionDataModel.fromJson(Map<String, dynamic> json) {
+    List<String> subCategoryName = [];
+    json.forEach(
+      (key, value) {
+        if (key.contains("sub")) {
+          subCategoryName.add(value.toString());
+        }
+      },
+    );
+    return SectionDataModel(
+      imageName: json["ImageName"],
+      name: json["Name"],
+      nameRu: json["Name!RU"] ?? json["Name!ru"],
+      nameDe: json["Name!de"],
+      nameEn: json["Name!en"],
+      nameEs: json["Name!es"],
+      nameFr: json["Name!fr"],
+      namePl: json["Name!pl"],
+      sectionDataModelNameRu: json["Name!ru"],
+      nameZh: json["Name!zh"],
+      nameZhHans: json["Name!zh-Hans"],
+      type: json["Type"],
+      imageUrl: json["imageUrl"] ?? "",
+      subCategory: subCategoryName,
+    );
+  }
 
   Map<String, dynamic> toJson() => {
         "ImageName": imageName,
@@ -66,5 +79,6 @@ class SectionDataModel {
         "Name!zh-Hans": nameZhHans,
         "Type": type,
         "imageUrl": imageUrl,
+        "subCategory": subCategory,
       };
 }

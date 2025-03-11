@@ -11,6 +11,7 @@ import 'package:urestaurants_user/Utils/app_routes.dart';
 import 'package:urestaurants_user/Utils/app_sizebox.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
 import 'package:urestaurants_user/View/InfoScreen/controller/info_controller.dart';
+import 'package:urestaurants_user/View/LoginScreen/login_screen.dart';
 
 class InfoScreen extends StatefulWidget {
   const InfoScreen({super.key});
@@ -78,7 +79,7 @@ class _InfoScreenState extends State<InfoScreen> {
                                       if (preferences.getBool(SharedPreference.isLogin) == true) {
                                         Get.toNamed(Routes.profileScreen);
                                       } else {
-                                        Get.offAllNamed(Routes.loginScreen);
+                                        Get.bottomSheet(LoginScreen());
                                       }
                                     },
                                     icon: const Icon(
@@ -89,13 +90,12 @@ class _InfoScreenState extends State<InfoScreen> {
                                   )
                                 ],
                               ),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  AppAssets.hotelImage,
-                                  height: 170,
-                                  width: double.infinity,
-                                ),
+                              cachedNetworkImage(
+                                url: controller.infoDataModel?.logoUrl ?? "",
+                                name: "name",
+                                height: 170,
+                                width: double.infinity,
+                                radius: 10,
                               ),
                             ],
                           ),
@@ -349,26 +349,48 @@ class _InfoScreenState extends State<InfoScreen> {
                               ],
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              controller.checkWifi();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColor.appWhiteColor),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 15),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      CupertinoIcons.wifi,
-                                      color: AppColor.appBlueColor.withOpacity(0.8),
-                                    ),
-                                    8.0.addWSpace(),
-                                    AppString.configureWifi.primaryRegular(fontSize: 16, fontColor: AppColor.appBlackColor),
-                                  ],
+                          if (controller.isShowWifi)
+                            GestureDetector(
+                              onTap: () {
+                                controller.checkWifi();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 10),
+                                decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: AppColor.appWhiteColor),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.wifi,
+                                        color: AppColor.appBlueColor.withOpacity(0.8),
+                                      ),
+                                      8.0.addWSpace(),
+                                      AppString.configureWifi.primaryRegular(fontSize: 16, fontColor: AppColor.appBlackColor),
+                                    ],
+                                  ),
                                 ),
                               ),
+                            ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10).copyWith(top: 20, bottom: 10),
+                            child: AppString.googleReview.primaryRegular(fontSize: 12, fontColor: AppColor.appGreyColor5),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(7), color: AppColor.appWhiteColor),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.arrow_up_right_square,
+                                  color: AppColor.appOrangeColor,
+                                  size: 20,
+                                ),
+                                SizedBox(
+                                  width: 13,
+                                ),
+                                AppString.addYourBussInEss.primaryRegular(fontColor: AppColor.appBlackColor, fontSize: 16),
+                              ],
                             ),
                           ),
                           20.0.addHSpace(),

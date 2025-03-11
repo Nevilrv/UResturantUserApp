@@ -6,7 +6,6 @@ import 'package:apple_maps_flutter/apple_maps_flutter.dart';
 import 'package:custom_info_window/custom_info_window.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:geocode/geocode.dart';
 import 'package:get/get.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as googlemap;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,6 +14,7 @@ import 'package:urestaurants_user/Constant/app_color.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/FirebaseConfig/info_screen_config.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
+import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/InfoScreen/Model/info_data_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wifi_iot/wifi_iot.dart';
@@ -28,7 +28,7 @@ class InfoController extends GetxController {
   String? fullAddress;
   String? iframeHtml;
   InfoDataModel? infoDataModel;
-  String? id;
+
   List time = [];
   final CustomInfoWindowController customInfoWindowController = CustomInfoWindowController();
   String? url;
@@ -42,7 +42,6 @@ class InfoController extends GetxController {
 
   @override
   void onInit() {
-    id = preferences.getString(SharedPreference.id) ?? "01";
     super.onInit();
   }
 
@@ -52,12 +51,7 @@ class InfoController extends GetxController {
   }
 
   Future<void> initOrder({bool? isDbSame = false}) async {
-    String? infoData = preferences.getString(SharedPreference.hotelData);
-    if (infoData != null && infoData.isNotEmpty && isDbSame == true) {
-      await fetchInfoDataFromLocal();
-    } else {
-      await fetchInfoData();
-    }
+    await fetchInfoData();
     if (mapController == null) {
       mapController?.animateCamera(
         googlemap.CameraUpdate.newCameraPosition(
@@ -69,44 +63,11 @@ class InfoController extends GetxController {
     update();
   }
 
-  fetchInfoDataFromLocal() async {
-    String? infoData = preferences.getString(SharedPreference.hotelData);
-
-    if (infoData != null && infoData.isNotEmpty) {
-      infoDataModel = InfoDataModel.fromJson(json.decode(infoData));
-      time.add(infoDataModel?.the001Monday);
-      time.add(infoDataModel?.the002Tuesday);
-      time.add(infoDataModel?.the003Wednesday);
-      time.add(infoDataModel?.the004Thursday);
-      time.add(infoDataModel?.the005Friday);
-      time.add(infoDataModel?.the006Saturday);
-      time.add(infoDataModel?.the007Sunday);
-      platform = 'android';
-      if (platform == 'Android') url = infoDataModel?.urlGMaps;
-      if (platform == 'IOS') url = infoDataModel?.urlMaps;
-      double? lat = preferences.getDouble(SharedPreference.hotelLat);
-      double? long = preferences.getDouble(
-        SharedPreference.hotelLong,
-      );
-      coordinates = [lat, long];
-      fullAddress = preferences.getString(
-        SharedPreference.hotelAddress,
-      );
-
-      await getDateListFromLocal();
-    }
-  }
-
   Future<void> fetchInfoData() async {
-    if (infoDataModel != null) return;
     fetchDataLoader = true;
     update();
     try {
-      final snapshot = await InfoConfig().infoData();
-      infoDataModel = InfoDataModel.fromJson(json.decode(jsonEncode(snapshot)));
-      print('infoDataModel::::::::::::::::${infoDataModel?.toJson()}');
-      await preferences.putString(SharedPreference.hotelData, jsonEncode(infoDataModel?.toJson()));
-      await preferences.putString(SharedPreference.restroName, infoDataModel?.nome ?? "");
+      infoDataModel = Get.find<HomeScreenController>().selectedRestaurant?.info;
       time.add(infoDataModel?.the001Monday);
       time.add(infoDataModel?.the002Tuesday);
       time.add(infoDataModel?.the003Wednesday);
@@ -117,8 +78,15 @@ class InfoController extends GetxController {
       platform = 'android';
       if (platform == 'Android') url = infoDataModel?.urlGMaps;
       if (platform == 'IOS') url = infoDataModel?.urlMaps;
-      coordinates = await extractCoordinates("${infoDataModel?.urlMaps}");
-      fullAddress = await getAddressFromCoordinatesFromPackage();
+      log('Get.find<HomeScreenController>().selectedRestaurant?.lat::::::::::::::::${Get.find<HomeScreenController>().selectedRestaurant?.lat}');
+      log('    Get.find<HomeScreenController>().selectedRestaurant?.long ::::::::::::::::${Get.find<HomeScreenController>().selectedRestaurant?.long}');
+      coordinates = [
+        Get.find<HomeScreenController>().selectedRestaurant?.lat ?? 0.0,
+        Get.find<HomeScreenController>().selectedRestaurant?.long ?? 0.0
+      ];
+      fullAddress = Get.find<HomeScreenController>().selectedRestaurant?.fullAddress ?? "";
+      log('fullAddress::::::::::::::::${fullAddress}');
+      log('infoDataModel::::::::::::::::${infoDataModel?.nome}');
       await getDateList();
     } catch (e) {
       debugPrint('e==========>>>>>$e');
@@ -127,65 +95,13 @@ class InfoController extends GetxController {
     update();
   }
 
-  Future<Object?> getExceptionsData() async {
-    final snapshot = await InfoConfig().exceptionsData(id ?? '01');
-    return snapshot;
-  }
-
   List dayList = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 
   getDateList() async {
-    var data = await getExceptionsData();
+    var data = Get.find<HomeScreenController>().selectedRestaurant?.exceptions;
     Map<String, dynamic>? tempData;
     if (data != null) {
       tempData = jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
-      await preferences.putString(SharedPreference.exceptionsData, jsonEncode(tempData));
-    }
-    days = [];
-    final now = DateTime.now().toUtc().add(const Duration(hours: 1));
-    final currentDayIndex = now.weekday - 1;
-    for (int i = 0; i < 7; i++) {
-      final date = now.add(Duration(days: i));
-      final formattedDate = DateFormat('yyyy-MM-dd').format(date);
-      final dayIndex = (currentDayIndex + i) % 7;
-      days.add({
-        "date": formattedDate,
-        "day": "${dayList[dayIndex]}",
-        "time": time[dayIndex],
-        "color": Colors.black,
-        "color1": Colors.black,
-      });
-    }
-
-    for (var ele1 in days) {
-      if (tempData != null) {
-        tempData.forEach(
-          (key, value) {
-            if (ele1["date"] == key) {
-              if (value.toString().contains("orario")) {
-                ele1["time"] = value["orario"];
-                if (value["rename"] != null) {
-                  ele1["day"] = value["rename"];
-                }
-
-                ele1["color"] = Colors.red;
-                ele1["color1"] = Colors.red;
-              } else {
-                ele1["time"] = value;
-                ele1["color"] = Colors.red;
-              }
-            }
-          },
-        );
-      }
-    }
-  }
-
-  getDateListFromLocal() async {
-    String? data = preferences.getString(SharedPreference.exceptionsData);
-    Map<String, dynamic>? tempData;
-    if (data != null && data.isNotEmpty) {
-      tempData = jsonDecode(data);
     }
     days = [];
     final now = DateTime.now().toUtc().add(const Duration(hours: 1));
@@ -256,8 +172,6 @@ class InfoController extends GetxController {
           double latitude = double.parse(parts[0]);
           double longitude = double.parse(parts[1]);
 
-          await preferences.putDouble(SharedPreference.hotelLat, latitude);
-          await preferences.putDouble(SharedPreference.hotelLong, longitude);
           return [latitude, longitude];
         } else {
           debugPrint('Invalid lat-long format in the URL.');
@@ -300,27 +214,6 @@ class InfoController extends GetxController {
       debugPrint('Error parsing the URL: $e');
       return null;
     }
-  }
-
-  Future<String> getAddressFromCoordinatesFromPackage() async {
-    addressValue = true;
-    update();
-    GeoCode geoCode = GeoCode();
-
-    Address address = await geoCode.reverseGeocoding(
-      latitude: coordinates!.first,
-      longitude: coordinates!.last,
-    );
-    if (address.toString().contains("Throttled")) {
-      return getAddressFromCoordinatesFromPackage();
-    }
-    String formattedAddress =
-        "${address.streetNumber ?? ""}${address.streetNumber == null ? "" : ", "}${address.streetAddress ?? ""}${address.streetAddress == null ? "" : ", "}${address.city ?? ""}${address.streetAddress == null && address.countryName != null ? "" : ", "}${address.countryName}";
-    addressValue = false;
-    update();
-
-    await preferences.putString(SharedPreference.hotelAddress, formattedAddress);
-    return formattedAddress;
   }
 
   Future<void> launchMap(String url) async {
@@ -430,6 +323,7 @@ class InfoController extends GetxController {
     }
   }
 
+  bool get isShowWifi => infoDataModel?.ssid != null && infoDataModel?.password != null;
   checkWifi() async {
     await checkWifiStatus();
     bool isConnected = await WiFiForIoTPlugin.connect(

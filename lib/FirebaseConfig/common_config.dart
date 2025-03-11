@@ -14,4 +14,17 @@ class CommonConfig {
     }
     return null;
   }
+
+  Future<String?> loadImageWithoutExtension(String storageName, String imageName) async {
+    try {
+      log('storageName::::::::::::::::${storageName}');
+      log('imageName::::::::::::::::${imageName}');
+      final ref = FirebaseStorage.instance.ref().child('$storageName/$imageName');
+      final url = await ref.getDownloadURL();
+      return url;
+    } catch (e) {
+      log('Error loading image: $e');
+    }
+    return null;
+  }
 }

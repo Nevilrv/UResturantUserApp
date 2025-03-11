@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/FirebaseConfig/info_screen_config.dart';
-import 'package:urestaurants_user/Utils/app_routes.dart';
 
 class LoginScreenController extends GetxController {
   bool googleSignLoader = false;
@@ -46,7 +45,7 @@ class LoginScreenController extends GetxController {
         preferences.putString(SharedPreference.userEmail, user.email ?? "");
         preferences.putString(SharedPreference.userFirstName, name);
         preferences.putString(SharedPreference.userLastName, surname);
-        Get.offAllNamed(Routes.bottomBar);
+        Get.back(result: true);
       } else {
         debugPrint('Google Sign-In Failed');
       }

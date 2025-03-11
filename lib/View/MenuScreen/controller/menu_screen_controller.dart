@@ -5,9 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:urestaurants_user/Constant/app_assets.dart';
 import 'package:urestaurants_user/Constant/app_string.dart';
-import 'package:urestaurants_user/Constant/shared_pref.dart';
-import 'package:urestaurants_user/FirebaseConfig/common_config.dart';
-import 'package:urestaurants_user/FirebaseConfig/menu_screen_config.dart';
+import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/MenuScreen/Model/item_data_model.dart';
 import 'package:urestaurants_user/View/MenuScreen/Model/section_data_model.dart';
 
@@ -66,124 +64,25 @@ class MenuPageController extends GetxController {
     update();
   }
 
-  fetchData({bool? isDBSame = false}) async {
-    try {
-      String? sectionData = preferences.getString(SharedPreference.sectionData);
-      String? itemData = preferences.getString(SharedPreference.itemData);
-      if (sectionData != null && sectionData.isNotEmpty && itemData != null && itemData.isNotEmpty && isDBSame == true) {
-        log('sectionData::::::::::::::::${sectionData}');
-        await fetchDataFromLocal();
-        updateLoaderValue(false);
-      } else {
-        log('fetchSectionData::::::::::::::::');
-        await fetchSectionData();
-      }
-    } catch (error) {
-      log('error::::::::::::::::${error}');
-    } finally {}
-  }
-
-  fetchDataFromLocal() async {
-    String? sData = preferences.getString(SharedPreference.sectionData);
-    log('sData::::::::::::::::${sData}');
-    if (sData != null && sData.isNotEmpty) {
-      List decodedData = (jsonDecode(sData));
-      for (var element in decodedData) {
-        if (element != null) {
-          List tempKeyList = element.keys.toList();
-          List tempValueList = element.values.toList();
-          List subCategory = [];
-
-          for (var i = 0; i < tempKeyList.length; i++) {
-            if (tempKeyList[i].toString().contains("sub")) {
-              subCategory.add(tempValueList[i]);
-            }
-          }
-          filterList.add({"${element["Name"]}": "$subCategory"});
-        }
-      }
-      List tempData = json.decode(jsonEncode(decodedData)).toList();
-      tempData.removeWhere((element) => element == null);
-
-      sectionDataModel = List<SectionDataModel>.from(tempData.map((x) {
-        if (x != null) {
-          return SectionDataModel.fromJson(x);
-        }
-      }));
-
-      selectedCategory = sectionDataModel?.first.name ?? "";
-
-      for (var i = 0; i < sectionDataModel!.length; i++) {
-        if (sectionDataModel?[i].imageUrl != null) {
-          log('sectionDataModel?[i].imageName::::::::::::::::${sectionDataModel?[i].imageName}');
-          sectionDataModel?[i].imageUrl =
-              "assets/images/category/${sectionDataModel?[i].imageName}.jpeg" /*await CommonConfig().loadImage("sectionImages", sectionDataModel?[i].imageName ?? "", "jpeg")*/;
-        }
-        // if (i >= 2) {
-        //   fetchDataLoader = false;
-        //   update();
-        // }
-      }
-    }
-    String? iData = preferences.getString(SharedPreference.itemData);
-    log('iData::::::::::::::::${iData}');
-    if (iData != null && iData.isNotEmpty) {
-      List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(jsonDecode(iData));
-
-      itemDataModel = List<ItemDataModel>.from(data.map(
-        (e) => ItemDataModel.fromJson(e),
-      ));
-
-      await filterItemData();
-    }
-    update();
-  }
-
   Future<void> fetchSectionData() async {
     try {
       fetchDataLoader = true;
-      log('fetchDataLoader::::::::::::::::${fetchDataLoader}');
       update();
-      final snapshot = await MenuConfig().sectionData();
+
       filterList = [];
-      List decodedData = json.decode(jsonEncode(snapshot)).toList();
-      preferences.putString(SharedPreference.sectionData, jsonEncode(decodedData));
+      List<SectionDataModel>? decodedData = Get.find<HomeScreenController>().selectedRestaurant?.config?.sections ?? [];
+      log('decodedData::::::::::::::::${decodedData}');
       for (var element in decodedData) {
-        if (element != null) {
-          List tempKeyList = element.keys.toList();
-          List tempValueList = element.values.toList();
-          List subCategory = [];
-
-          for (var i = 0; i < tempKeyList.length; i++) {
-            if (tempKeyList[i].toString().contains("sub")) {
-              subCategory.add(tempValueList[i]);
-            }
-          }
-          filterList.add({"${element["Name"]}": "$subCategory"});
-        }
+        List<String> subCategory = element.subCategory ?? [];
+        log('subCategory::::::::::::::::${subCategory}');
+        filterList.add({"${element.name}": "$subCategory"});
       }
-      List tempData = json.decode(jsonEncode(snapshot)).toList();
-      tempData.removeWhere((element) => element == null);
 
-      sectionDataModel = List<SectionDataModel>.from(tempData.map((x) {
-        if (x != null) {
-          return SectionDataModel.fromJson(x);
-        }
-      }));
+      sectionDataModel = decodedData;
 
       selectedCategory = sectionDataModel?.first.name ?? "";
 
       await fetchItemData();
-      log('sectionDataModel!.length::::::::::::::::${sectionDataModel!.length}');
-      for (var i = 0; i < sectionDataModel!.length; i++) {
-        if (sectionDataModel?[i].imageUrl != null) {
-          sectionDataModel?[i].imageUrl = await CommonConfig().loadImage("sectionImages", sectionDataModel?[i].imageName ?? "", "jpeg");
-        }
-        // if (i >= 2) {
-        //   fetchDataLoader = false;
-        //   update();
-        // }
-      }
     } catch (e) {
       log('e=====fetchSectionData=====>>>>>$e');
     }
@@ -193,26 +92,13 @@ class MenuPageController extends GetxController {
 
   Future<void> fetchItemData() async {
     try {
-      final snapshot = await MenuConfig().itemData();
+      List<ItemDataModel> snapshot = Get.find<HomeScreenController>().selectedRestaurant?.items ?? [];
       itemDataModel.clear();
-      if ((snapshot?.children ?? []).isNotEmpty) {
-        snapshot?.children.forEach(
-          (element) {
-            if (element.value != null) {
-              final dta = json.decode(jsonEncode(element.value));
-              itemDataModel.add(ItemDataModel.fromJson(dta));
-              itemDataModel.last.key = element.key;
-            }
-          },
-        );
 
-        for (var i = 0; i < (itemDataModel.length ?? 0); i++) {
-          if (itemDataModel[i].imageAvailable != null) {
-            itemDataModel[i].imageAVAL = "assets/images/items/${itemDataModel[i].imageAvailable}.jpg";
-          }
-        }
+      if (snapshot.isNotEmpty) {
+        itemDataModel = snapshot;
+
         await filterItemData();
-        preferences.putString(SharedPreference.itemData, jsonEncode(itemDataModel));
       } else {
         message = "No Items!";
       }
@@ -225,6 +111,7 @@ class MenuPageController extends GetxController {
   Future<void> filterItemData() async {
     message = "";
     mainData = [];
+    update();
     log('filterList::::::::::::::::${filterList}');
     for (var section in filterList) {
       Map sectionData = jsonDecode(jsonEncode(section));

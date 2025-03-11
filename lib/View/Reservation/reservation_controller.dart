@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/FirebaseConfig/reservation_config.dart';
+import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/Reservation/Model/reservation_model.dart';
 
 class ReservationController extends GetxController {
@@ -34,12 +35,13 @@ class ReservationController extends GetxController {
     }
   }
 
-  Future<void> fetchReservationData() async {
-    if (reservationModel != null) return;
+  Future<void> fetchReservationData(dynamic Function(bool)? isActive) async {
     fetchDataLoader = true;
     update();
     try {
-      final snapshot = await ReservationConfig().reservationData();
+      final snapshot = await ReservationConfig(
+        isActive: isActive,
+      ).reservationData(Get.find<HomeScreenController>().selectedRestaurant?.id ?? "01");
       if (snapshot != null) {
         reservationModel = ReservationModel.fromJson(json.decode(jsonEncode(snapshot)));
         todaySlotTime = fetchTodaySchedule(reservationModel!.disponibilit!);
@@ -61,7 +63,7 @@ class ReservationController extends GetxController {
       "Giorno": DateFormat("dd MMMM yyyy").format(selectedDate),
       "Ora": selectedTime,
       "Pax": people,
-      "Place": preferences.getString(SharedPreference.restroName) ?? "",
+      "Place": Get.find<HomeScreenController>().selectedRestaurant?.info?.nome,
       "Request": requestController.text.trim(),
       "Status": "Confermata"
     };
