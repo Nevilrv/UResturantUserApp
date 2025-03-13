@@ -4,8 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/Utils/app_loader.dart';
-import 'package:urestaurants_user/Utils/app_sizebox.dart';
-import 'package:urestaurants_user/Utils/extention.dart';
 import 'package:urestaurants_user/View/BottomBar/controller/bottom_bar_controller.dart';
 import 'package:urestaurants_user/View/BottomBar/no_internet_screen.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
@@ -56,35 +54,15 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
         return Scaffold(
           backgroundColor: CupertinoColors.systemGrey6,
 
-          appBar: controller.selectScreen != 0
-              ? AppBar(
-                  backgroundColor: CupertinoColors.systemGrey6,
-                  elevation: 0,
-                  toolbarHeight: 0,
-                  systemOverlayStyle: const SystemUiOverlayStyle(
-                    statusBarColor: CupertinoColors.systemGrey6,
-                    statusBarIconBrightness: Brightness.dark,
-                  ),
-                )
-              : AppBar(
-                  forceMaterialTransparency: true,
-                  systemOverlayStyle: const SystemUiOverlayStyle(
-                    statusBarColor: CupertinoColors.systemGrey6,
-                    statusBarIconBrightness: Brightness.dark,
-                  ),
-                  leading: Row(
-                    children: [
-                      10.0.addWSpace(),
-                      Icon(
-                        CupertinoIcons.location_fill,
-                        color: AppColor.appColor,
-                      ),
-                      5.0.addWSpace(),
-                      "All".primaryRegular(fontColor: AppColor.appColor)
-                    ],
-                  ),
-                  leadingWidth: 100,
-                ),
+          appBar: AppBar(
+            backgroundColor: CupertinoColors.systemGrey6,
+            elevation: 0,
+            toolbarHeight: 0,
+            systemOverlayStyle: const SystemUiOverlayStyle(
+              statusBarColor: CupertinoColors.systemGrey6,
+              statusBarIconBrightness: Brightness.dark,
+            ),
+          ),
 
           body: AnnotatedRegion<SystemUiOverlayStyle>(
             value: const SystemUiOverlayStyle(

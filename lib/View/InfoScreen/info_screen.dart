@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -318,17 +320,20 @@ class _InfoScreenState extends State<InfoScreen> {
                                     ),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 15).copyWith(top: 5),
-                                  child: Text(
-                                    controller.fullAddress ??
-                                        "${controller.infoDataModel?.atr1 ?? ""}${(controller.infoDataModel?.atr1?.isNotEmpty) ?? false ? "," : ""} ${controller.infoDataModel?.atr2 ?? ""}${(controller.infoDataModel?.atr2?.isNotEmpty) ?? false ? "," : ""} ${controller.infoDataModel?.city ?? ""}",
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: AppColor.appBlackColor,
+                                Builder(builder: (context) {
+                                  log('controller.fullAddress::::::::::::::::${controller.fullAddress}');
+                                  return Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 15).copyWith(top: 5),
+                                    child: Text(
+                                      controller.fullAddress ??
+                                          "${controller.infoDataModel?.atr1 ?? ""}${(controller.infoDataModel?.atr1?.isNotEmpty) ?? false ? "," : ""} ${controller.infoDataModel?.atr2 ?? ""}${(controller.infoDataModel?.atr2?.isNotEmpty) ?? false ? "," : ""} ${controller.infoDataModel?.city ?? ""}",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: AppColor.appBlackColor,
+                                      ),
                                     ),
-                                  ),
-                                ),
+                                  );
+                                }),
                                 const Divider(
                                   color: AppColor.appDividerColor,
                                   indent: 15,

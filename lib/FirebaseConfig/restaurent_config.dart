@@ -2,139 +2,116 @@ import 'dart:convert';
 import 'dart:developer';
 
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter/material.dart';
-import 'package:geocode/geocode.dart';
+import 'package:flutter/foundation.dart';
 import 'package:urestaurants_user/FirebaseConfig/common_config.dart';
 import 'package:urestaurants_user/Utils/cache_manager.dart';
+import 'package:urestaurants_user/Utils/geo_coding_service.dart';
 import 'package:urestaurants_user/View/HomeScreen/model/all_data_model.dart';
 
 class RestaurentConfig {
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  CustomCacheManager customCacheManager = CustomCacheManager();
+  final CustomCacheManager _customCacheManager = CustomCacheManager();
+  final Map<String, String> _imageCache = {};
+  final Map<String, String> _addressCache = {};
 
   Future<List<AllDataModel>> getData() async {
-    DataSnapshot data = await _databaseRef.get();
-
-    Map<String, dynamic> decodedData = jsonDecode(jsonEncode(data.value));
-
-    decodedData.removeWhere(
-      (key, value) {
-        try {
-          int? keyInt = int.parse(key);
-          return false;
-        } catch (error) {
-          return true;
-        }
-      },
-    );
-
-    decodedData.removeWhere(
-      (key, value) {
-        if (value['Info'] != null) {
-          if (value['Info']['isActive'] != null) {
-            return value['Info']['isActive'] == false;
-          }
-
-          return false;
-        }
-        return true;
-      },
-    );
-    List<AllDataModel> allDataModel = [];
-    for (var entry in decodedData.entries) {
-      var value = entry.value;
-      var key = entry.key;
-      if (value['Info'] != null) {
-        try {
-          if (value['Info']['logoUrl'] == null) {
-            String? res = await CommonConfig().loadImage("ImagePlaces", key, "jpg");
-
-            value['Info']['logoUrl'] = res;
-          }
-          customCacheManager.getSingleFile(value['Info']['logoUrl']);
-        } catch (error) {}
-      }
-      allDataModel.add(AllDataModel.fromJson(value, key));
-    }
-
     try {
-      Map<String, String> imageUrls = {};
-      for (int index = 0; index < allDataModel.length; index++) {
-        List<double>? coordinates = await extractCoordinates("${allDataModel[index].info?.urlMaps}");
+      DataSnapshot dataSnapshot = await _databaseRef.once().then((event) => event.snapshot);
+      if (dataSnapshot.value == null) return [];
+      Map<String, dynamic> decodedData = jsonDecode(jsonEncode(dataSnapshot.value));
+      decodedData.removeWhere((key, value) => !_isValidEntry(key, value));
+      List<AllDataModel> allDataList = decodedData.entries.map((entry) {
+        return AllDataModel.fromJson(entry.value, entry.key);
+      }).toList();
+      await Future.wait(allDataList.map(_processRestaurantData));
+      return allDataList;
+    } catch (error) {
+      log('Error fetching restaurant data: $error');
+      return [];
+    }
+  }
 
-        if (coordinates != null && coordinates.length == 2) {
-          allDataModel[index].lat = coordinates[0];
-          allDataModel[index].long = coordinates[1];
-        }
-        allDataModel[index].fullAddress = await getAddressFromCoordinatesFromPackage(coordinates ?? [0.0, 0.0]);
+  bool _isValidEntry(String key, dynamic value) {
+    return int.tryParse(key) != null && value['Info']?['isActive'] == true;
+  }
 
-        /// Section Image
-        try {
-          for (int i = 0; i < (allDataModel[index].config?.sections?.length ?? 0); i++) {
-            if ((allDataModel[index].config?.sections?[i].imageUrl?.isEmpty ?? true)) {
-              String name = allDataModel[index].config?.sections?[i].name ?? "";
-              if (imageUrls.containsKey(name)) {
-                allDataModel[index].config?.sections?[i].imageUrl = imageUrls[name];
-              } else {
-                String? res = await CommonConfig().loadImage("sectionImages", name, "jpeg");
-                allDataModel[index].config?.sections?[i].imageUrl = res;
+  Future<void> _processRestaurantData(AllDataModel data) async {
+    try {
+      await Future.wait([
+        _cacheImageIfMissing(data),
+        _fetchLocationDetails(data),
+        _processSectionImages(data),
+      ]);
+    } catch (error) {
+      log('Error processing restaurant ${data.id}: $error');
+    }
+  }
 
-                imageUrls.addAll({name: res ?? ""});
-                customCacheManager.getSingleFile(res.toString());
-              }
-            }
+  Future<void> _cacheImageIfMissing(AllDataModel data) async {
+    data.info?.logoUrl ??= await CommonConfig().loadImage("ImagePlaces", data.id ?? "01", "jpg");
+    if (_isValidUrl(data.info?.logoUrl)) {
+      _customCacheManager.getSingleFile(data.info!.logoUrl!);
+    }
+  }
+
+  Future<void> _fetchLocationDetails(AllDataModel data) async {
+    List<double>? coordinates = await extractCoordinates(data.info?.urlMaps ?? "");
+    if (coordinates == null || coordinates.length != 2) return;
+
+    data.lat = coordinates[0];
+    data.long = coordinates[1];
+
+    String coordinateKey = "${data.lat},${data.long}";
+
+    if (_addressCache.containsKey(coordinateKey)) {
+      data.fullAddress = _addressCache[coordinateKey]!;
+    } else {
+      final lat = data.lat ?? 0.0;
+      final long = data.long ?? 0.0;
+      if (lat != 0.0 && long != 0.0) {
+        data.fullAddress = await GoogleGeocodingService.getAddressFromCoordinates(lat, long);
+        _addressCache[coordinateKey] = data.fullAddress ?? "";
+      } else {
+        data.fullAddress = "Invalid Coordinates";
+      }
+    }
+  }
+
+  Future<void> _processSectionImages(AllDataModel data) async {
+    if (data.config?.sections == null) return;
+
+    await Future.wait(data.config!.sections!.map((section) async {
+      if ((section.imageUrl?.isEmpty ?? true)) {
+        if (_imageCache.containsKey(section.name)) {
+          section.imageUrl = _imageCache[section.name];
+        } else {
+          section.imageUrl = await CommonConfig().loadImage("sectionImages", section.name ?? "", "jpeg");
+          if (_isValidUrl(section.imageUrl)) {
+            _imageCache[section.name ?? ""] = section.imageUrl!;
+            _customCacheManager.getSingleFile(section.imageUrl!);
           }
-        } catch (e) {
-          print(e);
         }
       }
-    } catch (exception) {
-      log('exception::::::::::::::::${exception}');
-    }
-
-    return allDataModel;
+    }));
   }
 
   static Future<List<double>?> extractCoordinates(String url) async {
     try {
-      Uri uri = Uri.parse(url);
+      Uri uri = Uri.tryParse(url) ?? Uri();
       String? latLong = uri.queryParameters['ll'];
       if (latLong != null) {
         List<String> parts = latLong.split(',');
         if (parts.length == 2) {
-          double latitude = double.parse(parts[0]);
-          double longitude = double.parse(parts[1]);
-
-          return [latitude, longitude];
-        } else {
-          debugPrint('Invalid lat-long format in the URL.');
+          return [double.parse(parts[0]), double.parse(parts[1])];
         }
-      } else {
-        debugPrint('No lat-long (ll) parameter found in the URL.');
       }
     } catch (e) {
-      debugPrint('Error parsing URL: $e');
+      debugPrint('Error parsing coordinates: $e');
     }
     return null;
   }
 
-  Future<String> getAddressFromCoordinatesFromPackage(List<double> coordinates) async {
-    try {
-      GeoCode geoCode = GeoCode();
-
-      Address address = await geoCode.reverseGeocoding(
-        latitude: coordinates.first,
-        longitude: coordinates.last,
-      );
-      if (address.toString().contains("Throttled")) {
-        return getAddressFromCoordinatesFromPackage(coordinates);
-      }
-      String formattedAddress =
-          "${address.streetNumber ?? ""}${address.streetNumber == null ? "" : ", "}${address.streetAddress ?? ""}${address.streetAddress == null ? "" : ", "}${address.city ?? ""}${address.streetAddress == null && address.countryName != null ? "" : ", "}${address.countryName}";
-
-      return formattedAddress;
-    } catch (error) {
-      return '';
-    }
+  bool _isValidUrl(String? url) {
+    return url != null && Uri.tryParse(url)?.hasAbsolutePath == true;
   }
 }

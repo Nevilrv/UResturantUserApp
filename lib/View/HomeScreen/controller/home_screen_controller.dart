@@ -15,6 +15,7 @@ class HomeScreenController extends GetxController {
   List<AllDataModel> restaurantsData = [];
   List<AllDataModel> pizzeriasData = [];
   List<AllDataModel> trattoriasData = [];
+  Set<String> cityFilter = {};
   AllDataModel? selectedRestaurant;
 
   updateSelectedRestaurant(AllDataModel data) {
@@ -33,7 +34,6 @@ class HomeScreenController extends GetxController {
     isLoading = true;
     update();
     String localData = preferences.getString(SharedPreference.allData, defValue: '') ?? '';
-    log('Get.find<BottomBarController>().isConnected::::::::::::::::${Get.find<BottomBarController>().isConnected}');
 
     if (localData.isNotEmpty) {
       List data = jsonDecode(localData);
@@ -47,7 +47,6 @@ class HomeScreenController extends GetxController {
     } else {
       await getDataFromClaud();
     }
-    log('allData:1111:::::::::::::::${allData.length}');
     filterTypeWise();
 
     isLoading = false;
@@ -67,29 +66,59 @@ class HomeScreenController extends GetxController {
     log('allData::::::::::::::::${allData}');
     if (allData.isNotEmpty) {
       await preferences.putString(SharedPreference.allData, jsonEncode(allData));
-      await filterTypeWise();
+      filterTypeWise();
     }
     update();
   }
 
-  filterTypeWise() {
-    restaurantsData = [];
-    pizzeriasData = [];
-    trattoriasData = [];
-    restaurantsData.addAll(allData
-        .where(
-          (element) => element.info?.mode == "Ristorante",
-        )
-        .toList());
-    pizzeriasData.addAll(allData
-        .where(
-          (element) => element.info?.mode == "Pizza",
-        )
-        .toList());
-    trattoriasData.addAll(allData
-        .where(
-          (element) => element.info?.mode == "Trattoria",
-        )
-        .toList());
+  void filterTypeWise() {
+    // Clear previous data
+    restaurantsData.clear();
+    pizzeriasData.clear();
+    trattoriasData.clear();
+    cityFilter.clear();
+    cityFilter.add("All");
+    // Use a single loop to filter types & extract cities
+    for (var item in allData) {
+      switch (item.info?.mode) {
+        case "Ristorante":
+          restaurantsData.add(item);
+          break;
+        case "Pizza":
+          pizzeriasData.add(item);
+          break;
+        case "Trattoria":
+          trattoriasData.add(item);
+          break;
+      }
+
+      // Add unique cities using a Set
+      if (item.info?.city?.isNotEmpty ?? false) {
+        cityFilter.add(item.info!.city!);
+      }
+    }
+  }
+
+  void customFilter(String name, String type) {
+    restaurantsData.clear();
+    pizzeriasData.clear();
+    trattoriasData.clear();
+    if (type == "City") {
+      for (var item in allData) {
+        if (item.info?.city == "$name") {
+          switch (item.info?.mode) {
+            case "Ristorante":
+              restaurantsData.add(item);
+              break;
+            case "Pizza":
+              pizzeriasData.add(item);
+              break;
+            case "Trattoria":
+              trattoriasData.add(item);
+              break;
+          }
+        }
+      }
+    }
   }
 }

@@ -9,7 +9,7 @@ class CustomCacheManager extends CacheManager {
   CustomCacheManager._()
       : super(Config(
           key,
-          stalePeriod: const Duration(days: 7),
+          stalePeriod: const Duration(days: 365),
           maxNrOfCacheObjects: 500,
         ));
 }

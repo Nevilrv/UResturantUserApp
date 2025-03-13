@@ -33,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: GestureDetector(
               onTap: () => Get.back(),
               child: CircleAvatar(
-                backgroundColor: AppColor.appGreyColor5.withValues(alpha: 0.3),
+                backgroundColor: AppColor.appGreyColor5.withOpacity(0.3),
                 child: const Icon(
                   Icons.close,
                   size: 16,

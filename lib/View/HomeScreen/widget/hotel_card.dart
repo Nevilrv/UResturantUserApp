@@ -84,7 +84,7 @@ class HotelCard extends StatelessWidget {
                       child: Container(
                         padding: EdgeInsets.symmetric(horizontal: 5, vertical: 3),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: Colors.white.withOpacity(0.6),
                           borderRadius: BorderRadius.circular(5),
                         ),
                         child: Row(
