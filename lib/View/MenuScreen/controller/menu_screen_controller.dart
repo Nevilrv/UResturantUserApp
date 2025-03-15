@@ -5,6 +5,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:urestaurants_user/Constant/app_assets.dart';
 import 'package:urestaurants_user/Constant/app_string.dart';
+import 'package:urestaurants_user/Utils/sql_helper.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/MenuScreen/Model/item_data_model.dart';
 import 'package:urestaurants_user/View/MenuScreen/Model/section_data_model.dart';
@@ -71,17 +72,25 @@ class MenuPageController extends GetxController {
 
       filterList = [];
       List<SectionDataModel>? decodedData = Get.find<HomeScreenController>().selectedRestaurant?.config?.sections ?? [];
-      log('decodedData::::::::::::::::${decodedData}');
+      List<Map<String, dynamic>> sectionImages = await DatabaseHelper().getAllTableData(
+        tableName: DatabaseHelper.section,
+      );
+      Map<String, dynamic> images = {};
+
+      for (int i = 0; i < sectionImages.length; i++) {
+        var e = sectionImages[i];
+        images.addAll({"${e['section']}": "${e['image']}"});
+      }
+
       for (var element in decodedData) {
         List<String> subCategory = element.subCategory ?? [];
-        log('subCategory::::::::::::::::${subCategory}');
+        element.imageUrl = images['${element.name}'] ?? "";
         filterList.add({"${element.name}": "$subCategory"});
       }
 
       sectionDataModel = decodedData;
 
       selectedCategory = sectionDataModel?.first.name ?? "";
-
       await fetchItemData();
     } catch (e) {
       log('e=====fetchSectionData=====>>>>>$e');
@@ -112,7 +121,6 @@ class MenuPageController extends GetxController {
     message = "";
     mainData = [];
     update();
-    log('filterList::::::::::::::::${filterList}');
     for (var section in filterList) {
       Map sectionData = jsonDecode(jsonEncode(section));
 
@@ -134,8 +142,6 @@ class MenuPageController extends GetxController {
         }
       });
     }
-
-    log('mainData::::::::::::::::${jsonEncode(mainData)}');
 
     if (mainData.isEmpty) {
       message = "No Items!";

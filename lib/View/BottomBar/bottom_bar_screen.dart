@@ -1,9 +1,11 @@
+import 'dart:developer';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/Utils/app_loader.dart';
+import 'package:urestaurants_user/Utils/sql_helper.dart';
 import 'package:urestaurants_user/View/BottomBar/controller/bottom_bar_controller.dart';
 import 'package:urestaurants_user/View/BottomBar/no_internet_screen.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
@@ -31,10 +33,20 @@ class BottomBar extends StatefulWidget {
 
 class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMixin {
   final BottomBarController bottomBarController = Get.put(BottomBarController());
-
+  List<Map<String, dynamic>> data = [];
   @override
   void initState() {
+    getData();
     super.initState();
+  }
+
+  getData() async {
+    try {
+      data = await DatabaseHelper().getAllTableData(tableName: DatabaseHelper.restaurant);
+      setState(() {});
+    } catch (error) {
+      log('error::::::::::::::::${error}');
+    }
   }
 
   @override
@@ -69,7 +81,7 @@ class _BottomBarState extends State<BottomBar> with SingleTickerProviderStateMix
               statusBarColor: CupertinoColors.systemGrey6,
               statusBarIconBrightness: Brightness.dark,
             ),
-            child: (controller.isConnected == false && ((preferences.getString(SharedPreference.allData, defValue: '') ?? '').isEmpty))
+            child: (controller.isConnected == false && (data.isEmpty))
                 ? NoInternetScreen()
                 : (controller.isConnected == false && controller.selectScreen == 2 && controller.isReservationAvailable)
                     ? NoInternetScreen()

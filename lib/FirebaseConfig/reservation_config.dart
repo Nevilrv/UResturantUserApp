@@ -20,7 +20,6 @@ class ReservationConfig {
 
   Future<Object?> reservationData(String id) async {
     try {
-      print('id::::::::::::::::${id}');
       DatabaseReference configRef = _databaseRef.child('${id}S');
       final snapshot = await configRef.get();
       if (snapshot.exists) {

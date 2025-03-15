@@ -40,7 +40,6 @@ class InfoConfig {
 
   Future<void> addUserData({required Map<String, dynamic> body, required String id}) async {
     try {
-      log('id::::::::::::::::${id}');
       DatabaseReference userRef = _databaseRef.child('Auth').child(id);
       await userRef.set(body);
       log('New user added with ID: ${userRef.key}');

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,15 +27,14 @@ class LoginScreenController extends GetxController {
       final UserCredential authResult = await FirebaseAuth.instance.signInWithCredential(credential);
       final User? user = authResult.user;
       if (user != null) {
-        log('user.uid::::::::::::::::${user.uid}');
         final userData = await InfoConfig().getUserData(id: user.uid);
-        log('userData::::::::::::::::${userData}');
+
         final List<String> nameParts = (user.displayName ?? "").split(" ");
         final String name = nameParts.isNotEmpty ? nameParts.first : "";
         final String surname = nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
         if (userData == null) {
           Map<String, dynamic> body = {"Nome": name, "Cognome": surname, "Email": user.email};
-          log('body::::::::::::::::${body}');
+
           await InfoConfig().addUserData(id: user.uid, body: body);
         }
         preferences.putBool(SharedPreference.isLogin, true);

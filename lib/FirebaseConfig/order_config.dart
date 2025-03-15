@@ -41,25 +41,19 @@ class OrderConfig {
     try {
       String userId = preferences.getString(SharedPreference.userId) ?? "";
       int totalOrders = 0;
-      log('userId::::::::::::::::${userId}');
       DatabaseReference configRef = _databaseRef.child(userId ?? "");
       final snapshot = await configRef.get();
-
       if (snapshot.exists) {
         Map<String, dynamic> data = jsonDecode(jsonEncode(snapshot.value));
         if (data.containsKey("0rders")) {
           totalOrders = data['0rders'];
         }
-        log('totalOrders::::::::::::::::${totalOrders}');
-        log('data::::::::::::::::${data}');
         List<int> numericKeys = data.keys
             .where((key) => int.tryParse(key) != null) // Keep only numeric keys
             .map((key) => int.parse(key)) // Convert to int
             .toList();
-        log('numericKeys::::::::::::::::${numericKeys}');
         numericKeys.sort();
-        log('lastIndex::::::::::::::::${numericKeys}');
-        ;
+
         List<Map<String, dynamic>> res = [];
         numericKeys.forEach(
           (element) {

@@ -14,6 +14,7 @@ import 'package:urestaurants_user/Constant/app_color.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/FirebaseConfig/info_screen_config.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
+import 'package:urestaurants_user/Utils/sql_helper.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/InfoScreen/Model/info_data_model.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -66,31 +67,31 @@ class InfoController extends GetxController {
   Future<void> fetchInfoData() async {
     fetchDataLoader = true;
     update();
-    try {
-      infoDataModel = Get.find<HomeScreenController>().selectedRestaurant?.info;
-      time.add(infoDataModel?.the001Monday);
-      time.add(infoDataModel?.the002Tuesday);
-      time.add(infoDataModel?.the003Wednesday);
-      time.add(infoDataModel?.the004Thursday);
-      time.add(infoDataModel?.the005Friday);
-      time.add(infoDataModel?.the006Saturday);
-      time.add(infoDataModel?.the007Sunday);
-      platform = 'android';
-      if (platform == 'Android') url = infoDataModel?.urlGMaps;
-      if (platform == 'IOS') url = infoDataModel?.urlMaps;
-      log('Get.find<HomeScreenController>().selectedRestaurant?.lat::::::::::::::::${Get.find<HomeScreenController>().selectedRestaurant?.lat}');
-      log('    Get.find<HomeScreenController>().selectedRestaurant?.long ::::::::::::::::${Get.find<HomeScreenController>().selectedRestaurant?.long}');
-      coordinates = [
-        Get.find<HomeScreenController>().selectedRestaurant?.lat ?? 0.0,
-        Get.find<HomeScreenController>().selectedRestaurant?.long ?? 0.0
-      ];
-      fullAddress = Get.find<HomeScreenController>().selectedRestaurant?.fullAddress ?? "";
-      log('fullAddress::::::::::::::::${fullAddress}');
-      log('infoDataModel::::::::::::::::${infoDataModel?.nome}');
-      await getDateList();
-    } catch (e) {
-      debugPrint('e==========>>>>>$e');
+    String? selectedRestaurantId = Get.find<HomeScreenController>().selectedRestaurant?.id;
+    ;
+    List<Map<String, dynamic>> restaurantData =
+        await DatabaseHelper().getDataFromTable(tableName: DatabaseHelper.restaurant, where: "id", id: selectedRestaurantId ?? "");
+    if (restaurantData.isNotEmpty) {
+      try {
+        infoDataModel = Get.find<HomeScreenController>().selectedRestaurant?.info;
+        time.add(infoDataModel?.the001Monday);
+        time.add(infoDataModel?.the002Tuesday);
+        time.add(infoDataModel?.the003Wednesday);
+        time.add(infoDataModel?.the004Thursday);
+        time.add(infoDataModel?.the005Friday);
+        time.add(infoDataModel?.the006Saturday);
+        time.add(infoDataModel?.the007Sunday);
+        platform = 'android';
+        if (platform == 'Android') url = infoDataModel?.urlGMaps;
+        if (platform == 'IOS') url = infoDataModel?.urlMaps;
+        coordinates = [double.tryParse(restaurantData.first['lat']) ?? 0.0, double.tryParse(restaurantData.first['lang']) ?? 0.0];
+        fullAddress = restaurantData.first['fulladdress'] ?? "";
+        await getDateList();
+      } catch (e) {
+        debugPrint('e==========>>>>>$e');
+      }
     }
+
     fetchDataLoader = false;
     update();
   }
@@ -286,15 +287,14 @@ class InfoController extends GetxController {
       final UserCredential authResult = await FirebaseAuth.instance.signInWithCredential(credential);
       final User? user = authResult.user;
       if (user != null) {
-        log('user.uid::::::::::::::::${user.uid}');
         final userData = await InfoConfig().getUserData(id: user.uid);
-        log('userData::::::::::::::::${userData}');
+
         final List<String> nameParts = (user.displayName ?? "").split(" ");
         final String name = nameParts.isNotEmpty ? nameParts.first : "";
         final String surname = nameParts.length > 1 ? nameParts.sublist(1).join(" ") : "";
         if (userData == null) {
           Map<String, dynamic> body = {"Nome": name, "Cognome": surname, "Email": user.email};
-          log('body::::::::::::::::${body}');
+
           await InfoConfig().addUserData(id: user.uid, body: body);
         }
         preferences.putBool(SharedPreference.isLogin, true);

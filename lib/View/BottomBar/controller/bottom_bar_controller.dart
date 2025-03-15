@@ -3,7 +3,7 @@ import 'dart:developer';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:get/get.dart';
-import 'package:urestaurants_user/Constant/shared_pref.dart';
+import 'package:urestaurants_user/Utils/sql_helper.dart';
 import 'package:urestaurants_user/View/HomeScreen/controller/home_screen_controller.dart';
 import 'package:urestaurants_user/View/InfoScreen/controller/info_controller.dart';
 import 'package:urestaurants_user/View/MenuScreen/controller/menu_screen_controller.dart';
@@ -11,12 +11,11 @@ import 'package:urestaurants_user/View/Reservation/reservation_controller.dart';
 
 class BottomBarController extends GetxController {
   int selectScreen = 0;
-  bool isConnected = false; // Internet connectivity status
+  bool isConnected = true; // Internet connectivity status
   final Connectivity _connectivity = Connectivity();
   late StreamSubscription<List<ConnectivityResult>> _subscription;
   HomeScreenController homeScreenController = Get.put(HomeScreenController());
   final InfoController infoController = Get.put(InfoController());
-
   MenuPageController menuPageController = Get.put(MenuPageController());
   ReservationController reservationController = Get.put(ReservationController());
 
@@ -32,7 +31,6 @@ class BottomBarController extends GetxController {
   fetchReservationData() async {
     await reservationController.fetchReservationData(
       (p0) {
-        log('p0::::::::::::::::${p0}');
         isReservationAvailable = p0;
         update();
       },
@@ -47,7 +45,7 @@ class BottomBarController extends GetxController {
     homeScreenController.getInitialData();
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> result) {
+  void _updateConnectionStatus(List<ConnectivityResult> result) async {
     bool olderResult = isConnected;
     if (result.isNotEmpty) {
       isConnected = (result.first == ConnectivityResult.mobile || result.first == ConnectivityResult.wifi);
@@ -57,7 +55,8 @@ class BottomBarController extends GetxController {
     } else {
       isConnected = false;
     }
-    if (olderResult == false && ((preferences.getString(SharedPreference.allData, defValue: '') ?? '').isEmpty)) {
+    List<Map<String, dynamic>> localData = await DatabaseHelper().getAllTableData(tableName: DatabaseHelper.restaurant);
+    if (olderResult == false && localData.isEmpty) {
       homeScreenController.getInitialData();
     }
 
@@ -68,26 +67,6 @@ class BottomBarController extends GetxController {
   void changeTab(value) {
     selectScreen = value;
     update();
-  }
-
-  Future<void> checkDatabaseVersionAndLoadData() async {
-    // bool isSame = false;
-    // bool isFirstTime = preferences.getBool(SharedPreference.isFirstTime, defValue: true) ?? true;
-    // log('isConnected::::::::::::::::${isConnected}');
-    // if (isConnected) {
-    //   isSame = await InfoConfig().checkDataVersion();
-    //   log('isSameaaa::::::::::::::::${isSame}');
-    // } else {
-    //   isSame = isFirstTime == true ? false : true;
-    //   log('isSame::::::::::::::::${isSame}');
-    //   preferences.putBool(SharedPreference.isFirstTime, false);
-    // }
-    //
-    // log('isSame::::::::::::::::$isSame');
-    //
-    // orderPageController.getData(true, isSame);
-    // newOrderScreenController.getData(isSame: isSame);
-    // infoController.initOrder(isDbSame: isSame);
   }
 
   @override

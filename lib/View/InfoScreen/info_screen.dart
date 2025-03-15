@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -321,7 +319,6 @@ class _InfoScreenState extends State<InfoScreen> {
                                   ),
                                 ),
                                 Builder(builder: (context) {
-                                  log('controller.fullAddress::::::::::::::::${controller.fullAddress}');
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 15).copyWith(top: 5),
                                     child: Text(

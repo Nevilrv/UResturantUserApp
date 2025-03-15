@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/cupertino.dart';
 import 'package:pull_down_button/pull_down_button.dart';
 import 'package:urestaurants_user/Constant/app_color.dart';
@@ -7,9 +5,10 @@ import 'package:urestaurants_user/Utils/app_sizebox.dart';
 import 'package:urestaurants_user/Utils/extention.dart';
 
 class FilterButton extends StatefulWidget {
-  const FilterButton({super.key, required this.onChanged, required this.data});
+  const FilterButton({super.key, required this.onChanged, required this.data, required this.title});
   final Function(int) onChanged;
   final Set<String> data;
+  final String title;
 
   @override
   State<FilterButton> createState() => _FilterButtonState();
@@ -24,7 +23,6 @@ class _FilterButtonState extends State<FilterButton> {
       itemBuilder: (context) => List.generate(
         widget.data.length,
         (index) {
-          log('index::::::::::::::::${index}');
           return PullDownMenuItem(
             onTap: () {
               widget.onChanged.call(index);
@@ -49,7 +47,7 @@ class _FilterButtonState extends State<FilterButton> {
               color: AppColor.appColor,
             ),
             5.0.addWSpace(),
-            "All".primaryRegular(fontColor: AppColor.appColor)
+            widget.title.primaryRegular(fontColor: AppColor.appColor)
           ],
         ),
       ),

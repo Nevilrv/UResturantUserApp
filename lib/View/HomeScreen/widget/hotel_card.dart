@@ -20,6 +20,8 @@ class HotelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<HomeScreenController>(builder: (controller) {
+      bool isBothAttributeAvailable = ((data.info?.atr1 != null && data.info?.atr2 != null) &&
+          ((data.info?.atr1 ?? "").isNotEmpty && (data.info?.atr2 ?? "").isNotEmpty));
       return GestureDetector(
         onTap: () {
           controller.updateSelectedRestaurant(data);
@@ -110,7 +112,19 @@ class HotelCard extends StatelessWidget {
                   children: [
                     "${data.info?.nome}"
                         .primaryMedium(fontColor: AppColor.appBlackColor, fontSize: 16, maxLine: 1, textOverflow: TextOverflow.ellipsis),
-                    "${data.info?.atr1} • ${data.info?.atr2}".primaryMedium(fontColor: AppColor.appGreyColor5, fontSize: 12, maxLine: 1),
+
+                    Row(
+                      children: [
+                        "${data.info?.atr1}".primaryMedium(fontColor: AppColor.appGreyColor5, fontSize: 12, maxLine: 1),
+                        if (isBothAttributeAvailable) ...[
+                          3.0.addWSpace(),
+                          "•".primaryMedium(fontColor: AppColor.appGreyColor5, fontSize: 12, maxLine: 1),
+                          3.0.addWSpace(),
+                        ],
+                        "${data.info?.atr2}".primaryMedium(fontColor: AppColor.appGreyColor5, fontSize: 12, maxLine: 1),
+                      ],
+                    )
+                    // "${data.info?.atr1} • ${data.info?.atr2}"
                   ],
                 ).paddingSymmetric(
                   horizontal: 10,

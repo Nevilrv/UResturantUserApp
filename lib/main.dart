@@ -6,6 +6,7 @@ import 'package:sizer/sizer.dart';
 import 'package:urestaurants_user/Constant/app_color.dart';
 import 'package:urestaurants_user/Constant/shared_pref.dart';
 import 'package:urestaurants_user/Utils/app_routes.dart';
+import 'package:urestaurants_user/Utils/sql_helper.dart';
 import 'package:urestaurants_user/Utils/status_bar_color.dart';
 import 'package:urestaurants_user/View/InfoScreen/controller/info_controller.dart';
 
@@ -14,6 +15,7 @@ InfoController infoController = Get.put(InfoController());
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await preferences.init();
+  await DatabaseHelper().initDatabase();
   if (Firebase.apps.isEmpty) {
     await Firebase.initializeApp(
         // options: DefaultFirebaseOptions.android,

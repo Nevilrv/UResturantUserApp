@@ -44,9 +44,11 @@ class ReservationController extends GetxController {
       ).reservationData(Get.find<HomeScreenController>().selectedRestaurant?.id ?? "01");
       if (snapshot != null) {
         reservationModel = ReservationModel.fromJson(json.decode(jsonEncode(snapshot)));
-        todaySlotTime = fetchTodaySchedule(reservationModel!.disponibilit!);
-        timeList = todaySlotTime!.keys.toList();
-        slotList = todaySlotTime!.values.toList();
+        if (reservationModel?.disponibilit != null) {
+          todaySlotTime = fetchTodaySchedule(reservationModel!.disponibilit!);
+          timeList = todaySlotTime!.keys.toList();
+          slotList = todaySlotTime!.values.toList();
+        }
       }
     } catch (e) {
       debugPrint('e==========>>>>>$e');

@@ -106,7 +106,10 @@ class _MenuScreenState extends State<MenuScreen> {
                                       .toUpperCase()
                                       .trim()
                                       .replaceAll('     ', '')
-                                      .primaryMedium(fontColor: AppColor.appLightGreyColor, fontSize: 15);
+                                      .primaryMedium(
+                                        fontColor: AppColor.appLightGreyColor,
+                                        fontSize: 15,
+                                      );
                                 }),
                               ),
                               ClipRRect(
